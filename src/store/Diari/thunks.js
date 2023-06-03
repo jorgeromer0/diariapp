@@ -1,60 +1,73 @@
-import { doc, collection, setDoc, deleteDoc } from "@firebase/firestore/lite";
-import { async } from "@firebase/util";
-import { FirebaseDB } from "../../firebase/config";
-import { fileUpload, loadNotes } from "../../helpers";
+import { collection, deleteDoc, doc, setDoc } from 'firebase/firestore/lite';
+import { FirebaseDB } from '../../firebase/config';
+import { addNewEmptyNote, setActiveNote } from './';
 import {
-  addNewEmptyNote,
-  savingNewNote,
-  setActiveNote,
-  setNotes,
-  setPhotosToActiveNote,
-  setSaving,
-  updateNote,
-  deleteNoteById
-} from "./diariSlice";
+	deleteNoteById,
+	savingNewNote,
+	setNotes,
+	setPhotosToActiveNote,
+	setSaving,
+	updateNote,
+} from './diariSlice';
+import { fileUpload, loadNotes } from '../../helpers';
 
 export const startNewNote = () => {
-  return async (dispatch, getState) => {
-    dispatch(savingNewNote());
-    const { uid } = getState().auth;
+  return async( dispatch, getState ) => {
 
-    const newNote = {
-      title: "",
-      body: "",
-      date: new Date().getTime(),
-    };
-    const newDoc = await doc(collection(FirebaseDB, `${uid}/diari/notes`));
-    await setDoc(newDoc, newNote);
+      dispatch( savingNewNote() );
 
-    newNote.id = newNote.id;
+      const { uid } = getState().auth;
 
-    dispatch(addNewEmptyNote(newNote));
-    dispatch(setActiveNote(newNote));
-  };
-};
+      const newNote = {
+        title: '',
+        body: '',
+        date: new Date().getTime(),
+        imageUrls: []
+    }
 
-export const startLoadingNote = () => {
-  return async (dispatch, getState) => {
-    const { uid } = getState().auth;
-    if (!uid) throw new Error("El UID del usuario no existe");
-    const notes = await loadNotes(uid);
-    dispatch(setNotes(notes));
-  };
-};
+      const newDoc = doc( collection( FirebaseDB, `${ uid }/diari/notes`) );
+      await setDoc( newDoc, newNote );
+
+      newNote.id = newDoc.id;  
+
+      //! dispatch
+      dispatch( addNewEmptyNote( newNote ) );
+      dispatch( setActiveNote( newNote ) );
+
+  }
+}
+
+
+export const startLoadingNotes = () => {
+  return async( dispatch, getState ) => {
+      
+      const { uid } = getState().auth;
+      if ( !uid ) throw new Error('El UID del usuario no existe');
+
+      const notes = await loadNotes( uid );
+      dispatch( setNotes( notes ) );
+  }
+}
 
 export const startSaveNote = () => {
-  return async (dispatch, getState) => {
-    dispatch(setSaving());
-    const { uid } = getState().auth;
-    const { active: note } = getState().diari;
-    const noteToFireStore = { ...note };
-    delete noteToFireStore.id;
-    const docRef = doc(FirebaseDB, `${uid}/diari/notes/${note.id}`);
-    await setDoc(docRef, noteToFireStore, { merge: true });
+  return async( dispatch, getState ) => {
 
-    dispatch(updateNote(note));
-  };
-};
+      dispatch( setSaving() );
+
+      const { uid } = getState().auth;
+      const { active:note } = getState().diari;
+
+      const noteToFireStore = { ...note };
+      delete noteToFireStore.id;
+  
+      const docRef = doc( FirebaseDB, `${ uid }/diari/notes/${ note.id }` );
+      await setDoc( docRef, noteToFireStore, { merge: true });
+
+      dispatch( updateNote( note ) );
+
+  }
+}
+
 
 export const startUploadingFiles = (files = []) => {
   return async (dispatch) => {
@@ -72,13 +85,17 @@ export const startUploadingFiles = (files = []) => {
   };
 };
 
-export const startDeletingNotes = () => {
-  return async (dispatch, getState) => {
-    const { uid } = getState().auth;
-    const { active: note } = getState().diari;
-    const docRef = doc(FirebaseDB, `${uid}/diari/notes/${note.id}`);
-    await deleteDoc(docRef);
 
-    dispatch(deleteNoteById(note.id));
-  };
-};
+export const startDeletingNote = () => {
+  return async( dispatch, getState) => {
+
+      const { uid } = getState().auth;
+      const { active: note } = getState().diari;
+
+      const docRef = doc( FirebaseDB, `${ uid }/diari/notes/${ note.id }`);
+      await deleteDoc( docRef );
+
+      dispatch( deleteNoteById(note.id) );
+
+  }
+}

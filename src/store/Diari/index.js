@@ -1,2 +1,2 @@
-export * from './diariSlice'
-export default './thunks'
+export * from './diariSlice';
+export * from './thunks';

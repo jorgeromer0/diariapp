@@ -2,27 +2,24 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { login, logout } from '../store/auth/authSlice';
-import { startLoadingNote } from '../store/Diari/thunks';
-
+import { startLoadingNotes } from '../store/Diari/thunks';
+import { FirebaseAuth } from '../firebase/config';
 
 export const useCheckAuth = () => {
-
-    const { status } = useSelector((state) => state.auth);
-    const dispatch = useDispatch();
   
-    useEffect(() => {
-      const auth = getAuth();
-      onAuthStateChanged(auth, (user) => {
-        if (!user) return dispatch(logout());
+  const { status } = useSelector( state => state.auth );
+  const dispatch = useDispatch();
 
-        const { uid, email, displayName, photoURL } = user;
-        dispatch(login({ uid, email, displayName, photoURL }));
-        dispatch(startLoadingNote());
-      });
-    },
-    )
+  useEffect(() => {
+      
+      onAuthStateChanged( FirebaseAuth, async( user ) => {
+          if ( !user ) return dispatch( logout() );
 
-    return status;
-    
+          const { uid, email, displayName, photoURL } = user;
+          dispatch( login({ uid, email, displayName, photoURL }) );
+          dispatch( startLoadingNotes() );
+      })
+  }, []);
 
+  return status;
 }
